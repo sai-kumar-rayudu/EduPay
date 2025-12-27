@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Force local development URL for debugging
-const baseURL = 'http://localhost:5001/api';
+const baseURL = 'https://backend-202n.onrender.com/api';
 
 console.log('API Base URL (Forced):', baseURL);
 
