@@ -22,4 +22,18 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+// Add a response interceptor to handle global errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            // Token expired or invalid user -> Auto logout
+            console.warn('Session expired or unauthorized. Logging out...');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/'; // Redirect to login
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

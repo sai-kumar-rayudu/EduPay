@@ -5,8 +5,10 @@ import { Bell, Calendar, PlusCircle, CheckCircle, Trash2 } from 'lucide-react';
 
 const ExamHeadDashboard = () => {
     const [notifications, setNotifications] = useState([]);
+    const [selectedBatch, setSelectedBatch] = useState('All');
+    // Changed batch to targetBatches: []
     const [formData, setFormData] = useState({
-        title: '', year: '', semester: '', examFeeAmount: '', startDate: '', endDate: '', description: '', examType: 'regular'
+        title: '', year: '', targetBatches: [], semester: '', examFeeAmount: '', startDate: '', endDate: '', description: '', examType: 'regular'
     });
 
     const [editModalData, setEditModalData] = useState(null);
@@ -29,7 +31,8 @@ const ExamHeadDashboard = () => {
         try {
             await api.post('/admin/notifications', formData);
             toast.success('Notification Created!');
-            setFormData({ title: '', year: '', semester: '', examFeeAmount: '', startDate: '', endDate: '', description: '', examType: 'regular' });
+            // Reset form
+            setFormData({ title: '', year: '', targetBatches: [], semester: '', examFeeAmount: '', startDate: '', endDate: '', description: '', examType: 'regular' });
             fetchNotifications();
         } catch (error) {
             toast.error('Failed to create notification');
@@ -164,7 +167,7 @@ const ExamHeadDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Year (1-4)</label>
                                 <select
@@ -176,6 +179,37 @@ const ExamHeadDashboard = () => {
                                     {[1, 2, 3, 4].map(y => <option key={y} value={y}>{y}</option>)}
                                 </select>
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Target Batches</label>
+                                <div className="mt-1 space-y-2 border border-gray-300 rounded-lg p-3 bg-gray-50 h-[140px] overflow-y-auto">
+                                    {['2022-2026', '2023-2027', '2024-2028', '2025-2029'].map((batch) => (
+                                        <div key={batch} className="flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                id={`batch-${batch}`}
+                                                value={batch}
+                                                checked={formData.targetBatches?.includes(batch)}
+                                                onChange={(e) => {
+                                                    const { value, checked } = e.target;
+                                                    setFormData(prev => {
+                                                        const current = prev.targetBatches || [];
+                                                        if (checked) return { ...prev, targetBatches: [...current, value] };
+                                                        return { ...prev, targetBatches: current.filter(b => b !== value) };
+                                                    });
+                                                }}
+                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                            />
+                                            <label htmlFor={`batch-${batch}`} className="ml-2 block text-sm text-gray-900">
+                                                {batch}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Select multiple batches if needed.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Semester</label>
                                 <select
@@ -240,16 +274,38 @@ const ExamHeadDashboard = () => {
 
                 {/* Active Notifications List */}
                 <div className="space-y-6">
-                    <h2 className="text-xl font-bold flex items-center text-gray-800">
+                    <div className="flex flex-col space-y-4">
+                        <div className="flex justify-between items-center bg-gray-50 p-1.5 rounded-lg border border-gray-200">
+                            {['All', '2022-2026', '2023-2027', '2024-2028', '2025-2029'].map((batch) => (
+                                <button
+                                    key={batch}
+                                    onClick={() => setSelectedBatch(batch)}
+                                    className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${selectedBatch === batch
+                                        ? 'bg-white text-indigo-600 shadow-sm border border-gray-100 ring-1 ring-black/5'
+                                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {batch === 'All' ? 'All Batches' : batch}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <h2 className="text-xl font-bold flex items-center text-gray-800 mt-2">
                         <Calendar className="mr-2 h-5 w-5 text-indigo-500" />
                         Active Notifications
+                        {selectedBatch !== 'All' && (
+                            <span className="ml-2 text-xs font-normal text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                                Filtered: {selectedBatch}
+                            </span>
+                        )}
                     </h2>
-                    {notifications.length === 0 ? (
+                    {notifications.filter(n => selectedBatch === 'All' || (n.targetBatches && n.targetBatches.includes(selectedBatch))).length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-dashed border-gray-300">
                             <p className="text-gray-500">No active notifications found.</p>
                         </div>
                     ) : (
-                        notifications.map((notif) => (
+                        notifications.filter(n => selectedBatch === 'All' || (n.targetBatches && n.targetBatches.includes(selectedBatch))).map((notif) => (
                             <div key={notif._id} className="bg-white rounded-xl shadow-md p-5 border-l-4 border-green-500 hover:shadow-lg transition-shadow">
                                 <div className="flex justify-between items-start">
                                     <h3 className="text-lg font-bold text-gray-900">{notif.title}</h3>
@@ -261,6 +317,7 @@ const ExamHeadDashboard = () => {
                                 </div>
                                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-gray-600">
                                     <p><span className="font-medium">Year:</span> {notif.year}</p>
+                                    <p><span className="font-medium">Batch:</span> {notif.targetBatches && notif.targetBatches.length > 0 ? notif.targetBatches.join(', ') : (notif.batch || 'All/N/A')}</p>
                                     <p><span className="font-medium">Sem:</span> {notif.semester}</p>
                                     <p><span className="font-medium">Fee:</span> ₹{notif.examFeeAmount}</p>
                                     <p><span className="font-medium">Start:</span> {new Date(notif.startDate).toLocaleDateString()}</p>

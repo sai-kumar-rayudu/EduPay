@@ -100,6 +100,10 @@ const AdminDashboard = () => {
     const [directoryStudents, setDirectoryStudents] = useState([]);
     const [directoryFilter, setDirectoryFilter] = useState({ department: 'all', year: 'all' });
 
+    // Concession State
+    const [concessionMode, setConcessionMode] = useState(null); // 'collegeFeeDue', etc.
+    const [concessionVal, setConcessionVal] = useState('');
+
     // --- Effects & Handlers ---
 
     useEffect(() => {
@@ -516,24 +520,74 @@ const AdminDashboard = () => {
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{fee.label}</span>
                                     {searchedStudent[fee.key] === 0 ? (
-                                        <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-bold">PAID</span>
+                                        <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-green-100">PAID</span>
                                     ) : (
-                                        <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-bold">DUE</span>
+                                        <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-red-100">DUE</span>
                                     )}
                                 </div>
-                                <div className="flex justify-between items-end">
+                                <div className="flex justify-between items-end mb-2">
                                     <span className="text-2xl font-bold text-gray-900">₹{searchedStudent[fee.key]?.toLocaleString()}</span>
-                                    {searchedStudent[fee.key] > 0 && (
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('Confirm payment?')) handleUpdateFees(searchedStudent.usn, { [fee.key]: 0 });
-                                            }}
-                                            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all"
-                                        >
-                                            Mark Paid
-                                        </button>
-                                    )}
                                 </div>
+
+                                {searchedStudent[fee.key] > 0 && (
+                                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                                        {concessionMode === fee.key ? (
+                                            <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm animate-fade-in text-sm">
+                                                <p className="mb-2 font-medium text-gray-700">Grant Recommendation Concession</p>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Amount"
+                                                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                                        value={concessionVal}
+                                                        onChange={(e) => setConcessionVal(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2 mt-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const val = Number(concessionVal);
+                                                            if (!val || val <= 0) return toast.error("Enter valid amount");
+                                                            if (val > searchedStudent[fee.key]) return toast.error("Concession cannot exceed due");
+
+                                                            const newDue = searchedStudent[fee.key] - val;
+                                                            handleUpdateFees(searchedStudent.usn, { [fee.key]: newDue });
+                                                            toast.success(`Concession of ₹${val} applied!`);
+                                                            setConcessionMode(null);
+                                                            setConcessionVal('');
+                                                        }}
+                                                        className="flex-1 bg-indigo-600 text-white py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setConcessionMode(null); setConcessionVal(''); }}
+                                                        className="px-3 bg-gray-100 text-gray-600 py-1.5 rounded-md text-xs font-bold hover:bg-gray-200"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => { setConcessionMode(fee.key); setConcessionVal(''); }}
+                                                    className="flex-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+                                                >
+                                                    Concession
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Mark this fee as fully PAID?')) handleUpdateFees(searchedStudent.usn, { [fee.key]: 0 });
+                                                    }}
+                                                    className="flex-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+                                                >
+                                                    Mark Paid
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -715,8 +769,8 @@ const AdminDashboard = () => {
                             key={item.id}
                             onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
                             className={`w-full flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
-                                    ? 'bg-indigo-50 text-indigo-700'
-                                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                         >
                             <item.icon size={20} className={`mr-3 ${activeTab === item.id ? 'text-indigo-600' : 'text-gray-400'}`} />

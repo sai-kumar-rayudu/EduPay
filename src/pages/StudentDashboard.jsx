@@ -169,7 +169,7 @@ const StudentDashboard = () => {
                         </div>
                     </div>
                     <div className="h-12 w-px bg-gray-200 hidden md:block mx-2"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-4 flex-1 w-full">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-x-8 gap-y-4 flex-1 w-full justify-items-start md:justify-items-center">
                         <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Dept</p>
                             <p className="font-bold text-gray-800 text-lg">{profile?.department}</p>
@@ -177,6 +177,10 @@ const StudentDashboard = () => {
                         <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Year</p>
                             <p className="font-bold text-gray-800 text-lg">{profile?.currentYear}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Batch</p>
+                            <p className="font-bold text-gray-800 text-lg">{profile?.batch || 'N/A'}</p>
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Quota</p>
@@ -429,7 +433,9 @@ const StudentDashboard = () => {
                         </h3>
                         <p className="opacity-95 mb-5 text-sm leading-relaxed relative z-10 font-medium">
                             {isEligible
-                                ? "All regular dues are cleared. You are eligible to register for upcoming exams."
+                                ? (notifications && notifications.some(n => n.year === profile?.currentYear)
+                                    ? "Exam notification released. Please complete exam fee payment."
+                                    : "Exam notification not yet released.")
                                 : "You have pending dues. Please clear them to become eligible for exams."}
                         </p>
                         {!isEligible && (
