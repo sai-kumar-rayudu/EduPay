@@ -424,31 +424,42 @@ const StudentDashboard = () => {
                 <div className="lg:col-span-1 space-y-6">
 
                     {/* Eligibility Status */}
-                    <div className={`rounded-xl shadow-lg hover:shadow-xl transition-all p-6 text-white relative overflow-hidden group ${isEligible ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-pink-600'}`}>
-                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+                    {(() => {
+                        const hasLibraryDues = libraryRecords.some(r => r.status !== 'returned');
+                        const isClean = isEligible && !hasLibraryDues;
 
-                        <h3 className="text-xl font-bold mb-3 flex items-center relative z-10 font-serif">
-                            {isEligible ? <CheckCircle className="mr-2" /> : <AlertCircle className="mr-2" />}
-                            Fee Status
-                        </h3>
-                        <p className="opacity-95 mb-5 text-sm leading-relaxed relative z-10 font-medium">
-                            {isEligible
-                                ? (notifications && notifications.some(n => n.year === profile?.currentYear)
-                                    ? "Exam notification released. Please complete exam fee payment."
-                                    : "Exam notification not yet released.")
-                                : "You have pending dues. Please clear them to become eligible for exams."}
-                        </p>
-                        {!isEligible && (
-                            <div className="bg-black/10 p-4 rounded-lg text-xs backdrop-blur-sm border border-white/10 relative z-10">
-                                <p className="font-bold mb-2 uppercase tracking-wide opacity-80">Reasons For Ineligibility</p>
-                                <ul className="list-disc list-inside space-y-1.5 font-medium">
-                                    {eligibility?.reasons?.map((reason, idx) => (
-                                        <li key={idx}>{reason}</li>
-                                    ))}
-                                </ul>
+                        return (
+                            <div className={`rounded-xl shadow-lg hover:shadow-xl transition-all p-6 text-white relative overflow-hidden group ${isClean ? 'bg-gradient-to-br from-emerald-500 to-teal-600' : 'bg-gradient-to-br from-rose-500 to-pink-600'}`}>
+                                <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all"></div>
+
+                                <h3 className="text-xl font-bold mb-3 flex items-center relative z-10 font-serif">
+                                    {isClean ? <CheckCircle className="mr-2" /> : <AlertCircle className="mr-2" />}
+                                    {isClean ? 'Status: Eligible' : 'Status: Action Required'}
+                                </h3>
+                                <p className="opacity-95 mb-5 text-sm leading-relaxed relative z-10 font-medium">
+                                    {!isEligible
+                                        ? "You have pending academic fees. Please clear dues to enable exam registration."
+                                        : hasLibraryDues
+                                            ? "You have pending library books to return. Please clear library dues."
+                                            : (notifications && notifications.some(n => n.year === profile?.currentYear)
+                                                ? "Exam notification active. You are eligible to pay exam fees."
+                                                : "No active actions required.")
+                                    }
+                                </p>
+                                {!isClean && (
+                                    <div className="bg-black/10 p-4 rounded-lg text-xs backdrop-blur-sm border border-white/10 relative z-10">
+                                        <p className="font-bold mb-2 uppercase tracking-wide opacity-80">Pending Items</p>
+                                        <ul className="list-disc list-inside space-y-1.5 font-medium">
+                                            {!isEligible && eligibility?.reasons?.map((reason, idx) => (
+                                                <li key={`elig-${idx}`}>{reason}</li>
+                                            ))}
+                                            {hasLibraryDues && <li>Outstanding Library Books</li>}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Exam Notifications - Right Column (Span 2) */}

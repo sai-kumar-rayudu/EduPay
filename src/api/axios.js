@@ -26,11 +26,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
+        // Skip auto-logout for login endpoint failures
+        if (error.config && error.config.url && error.config.url.endsWith('/auth/login')) {
+            return Promise.reject(error);
+        }
+
         if (error.response && error.response.status === 401) {
             // Token expired or invalid user -> Auto logout
-            console.warn('Session expired or unauthorized. Logging out...');
-            localStorage.removeItem('userInfo');
-            window.location.href = '/'; // Redirect to login
+            // Avoid executing this if we are already on the login page to prevent loops/reloads
+            if (window.location.pathname !== '/login') {
+                console.warn('Session expired or unauthorized. Logging out...');
+                localStorage.removeItem('userInfo');
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
