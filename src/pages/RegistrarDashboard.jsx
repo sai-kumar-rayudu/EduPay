@@ -9,7 +9,7 @@ const RegistrarDashboard = () => {
     // Create Student Form
     const [formData, setFormData] = useState({
         username: '', password: '', name: '', department: 'CSE',
-        currentYear: 1, batch: '2024-2028', quota: 'government', entry: 'regular', email: '',
+        currentYear: 1, quota: 'government', entry: 'regular', email: '',
         transportOpted: false, transportRoute: '', hostelOpted: false, placementOpted: false,
         assignedCollegeFee: 0, assignedTransportFee: 0, assignedHostelFee: 0, assignedPlacementFee: 0
     });
@@ -261,19 +261,6 @@ const RegistrarDashboard = () => {
                                 <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
                                     value={formData.currentYear} onChange={e => setFormData({ ...formData, currentYear: parseInt(e.target.value) })}>
                                     {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Batch</label>
-                                <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm border p-2"
-                                    value={formData.batch} onChange={e => setFormData({ ...formData, batch: e.target.value })}>
-                                    <option>2021-2025</option>
-                                    <option>2022-2026</option>
-                                    <option>2023-2027</option>
-                                    <option>2024-2028</option>
-                                    <option>2025-2029</option>
-                                    <option>2026-2030</option>
                                 </select>
                             </div>
                         </div>

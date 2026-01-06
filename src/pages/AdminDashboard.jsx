@@ -92,195 +92,204 @@ const SearchStudentView = ({
     concessionVal,
     setConcessionVal,
     handleUpdateFees
-}) => (
-    <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
-        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm text-center">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Search Student Database</h3>
-            <div className="flex justify-center">
-                <SearchInput
-                    placeholder="Enter USN (e.g., 22221A0410)"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onSearch={handleSearch}
-                />
-            </div>
-        </div>
+}) => {
+    const [localSearch, setLocalSearch] = useState(searchTerm);
 
-        {searchedStudent && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 text-white flex justify-between items-start">
-                    <div>
-                        <h2 className="text-3xl font-bold tracking-tight">{searchedStudent.usn}</h2>
-                        <p className="opacity-80 mt-1 text-lg">{searchedStudent.user?.name}</p>
-                        <div className="flex gap-3 mt-4">
-                            <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm">{searchedStudent.department}</span>
-                            <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm capitalize">{searchedStudent.quota}</span>
+    // Sync if parent updates (optional, but good for resetting)
+    useEffect(() => {
+        setLocalSearch(searchTerm);
+    }, [searchTerm]);
+
+    return (
+        <div className="space-y-8 animate-fade-in max-w-5xl mx-auto">
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm text-center">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Search Student Database</h3>
+                <div className="flex justify-center">
+                    <SearchInput
+                        placeholder="Enter USN or Name"
+                        value={localSearch}
+                        onChange={(e) => setLocalSearch(e.target.value)}
+                        onSearch={() => handleSearch(localSearch)}
+                    />
+                </div>
+            </div>
+
+            {searchedStudent && (
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
+                    <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-8 text-white flex justify-between items-start">
+                        <div>
+                            <h2 className="text-3xl font-bold tracking-tight">{searchedStudent.usn}</h2>
+                            <p className="opacity-80 mt-1 text-lg">{searchedStudent.user?.name}</p>
+                            <div className="flex gap-3 mt-4">
+                                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm">{searchedStudent.department}</span>
+                                <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium backdrop-blur-sm capitalize">{searchedStudent.quota}</span>
+                            </div>
+                        </div>
+                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center font-bold text-2xl">
+                            {searchedStudent.user?.name?.charAt(0)}
                         </div>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center font-bold text-2xl">
-                        {searchedStudent.user?.name?.charAt(0)}
-                    </div>
-                </div>
 
-                <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {[
-                        { label: 'College Fee', key: 'collegeFeeDue' },
-                        { label: 'Transport Fee', key: 'transportFeeDue' },
-                        { label: 'Hostel Fee', key: 'hostelFeeDue' },
-                        { label: 'Placement Fee', key: 'placementFeeDue' }
-                    ].map(fee => (
-                        <div key={fee.key} className="p-5 rounded-xl bg-gray-50 border border-gray-100 hover:border-indigo-100 transition-colors">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{fee.label}</span>
-                                {searchedStudent[fee.key] === 0 ? (
-                                    <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-green-100">PAID</span>
-                                ) : (
-                                    <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-red-100">DUE</span>
-                                )}
-                            </div>
-                            <div className="flex justify-between items-end mb-2">
-                                <span className="text-2xl font-bold text-gray-900">₹{searchedStudent[fee.key]?.toLocaleString()}</span>
-                            </div>
-
-                            {searchedStudent[fee.key] > 0 && (
-                                <div className="space-y-3 pt-2 border-t border-gray-100">
-                                    {concessionMode === fee.key ? (
-                                        <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm animate-fade-in text-sm">
-                                            <p className="mb-2 font-medium text-gray-700">Grant Recommendation Concession</p>
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="number"
-                                                    placeholder="Amount"
-                                                    className="w-full p-2 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                                                    value={concessionVal}
-                                                    onChange={(e) => setConcessionVal(e.target.value)}
-                                                />
-                                            </div>
-                                            <div className="flex gap-2 mt-2">
-                                                <button
-                                                    onClick={() => {
-                                                        const val = Number(concessionVal);
-                                                        if (!val || val <= 0) return toast.error("Enter valid amount");
-                                                        if (val > searchedStudent[fee.key]) return toast.error("Concession cannot exceed due");
-
-                                                        const newDue = searchedStudent[fee.key] - val;
-                                                        handleUpdateFees(searchedStudent.usn, { [fee.key]: newDue });
-                                                        toast.success(`Concession of ₹${val} applied!`);
-                                                        setConcessionMode(null);
-                                                        setConcessionVal('');
-                                                    }}
-                                                    className="flex-1 bg-indigo-600 text-white py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700"
-                                                >
-                                                    Confirm
-                                                </button>
-                                                <button
-                                                    onClick={() => { setConcessionMode(null); setConcessionVal(''); }}
-                                                    className="px-3 bg-gray-100 text-gray-600 py-1.5 rounded-md text-xs font-bold hover:bg-gray-200"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </div>
+                    <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            { label: 'College Fee', key: 'collegeFeeDue' },
+                            { label: 'Transport Fee', key: 'transportFeeDue' },
+                            { label: 'Hostel Fee', key: 'hostelFeeDue' },
+                            { label: 'Placement Fee', key: 'placementFeeDue' }
+                        ].map(fee => (
+                            <div key={fee.key} className="p-5 rounded-xl bg-gray-50 border border-gray-100 hover:border-indigo-100 transition-colors">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{fee.label}</span>
+                                    {searchedStudent[fee.key] === 0 ? (
+                                        <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-green-100">PAID</span>
                                     ) : (
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => { setConcessionMode(fee.key); setConcessionVal(''); }}
-                                                className="flex-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
-                                            >
-                                                Concession
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm('Mark this fee as fully PAID?')) handleUpdateFees(searchedStudent.usn, { [fee.key]: 0 });
-                                                }}
-                                                className="flex-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
-                                            >
-                                                Mark Paid
-                                            </button>
-                                        </div>
+                                        <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded text-xs font-bold ring-1 ring-red-100">DUE</span>
                                     )}
                                 </div>
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-2xl font-bold text-gray-900">₹{searchedStudent[fee.key]?.toLocaleString()}</span>
+                                </div>
+
+                                {searchedStudent[fee.key] > 0 && (
+                                    <div className="space-y-3 pt-2 border-t border-gray-100">
+                                        {concessionMode === fee.key ? (
+                                            <div className="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm animate-fade-in text-sm">
+                                                <p className="mb-2 font-medium text-gray-700">Grant Recommendation Concession</p>
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Amount"
+                                                        className="w-full p-2 bg-gray-50 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                                        value={concessionVal}
+                                                        onChange={(e) => setConcessionVal(e.target.value)}
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2 mt-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            const val = Number(concessionVal);
+                                                            if (!val || val <= 0) return toast.error("Enter valid amount");
+                                                            if (val > searchedStudent[fee.key]) return toast.error("Concession cannot exceed due");
+
+                                                            const newDue = searchedStudent[fee.key] - val;
+                                                            handleUpdateFees(searchedStudent.usn, { [fee.key]: newDue });
+                                                            toast.success(`Concession of ₹${val} applied!`);
+                                                            setConcessionMode(null);
+                                                            setConcessionVal('');
+                                                        }}
+                                                        className="flex-1 bg-indigo-600 text-white py-1.5 rounded-md text-xs font-bold hover:bg-indigo-700"
+                                                    >
+                                                        Confirm
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setConcessionMode(null); setConcessionVal(''); }}
+                                                        className="px-3 bg-gray-100 text-gray-600 py-1.5 rounded-md text-xs font-bold hover:bg-gray-200"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => { setConcessionMode(fee.key); setConcessionVal(''); }}
+                                                    className="flex-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+                                                >
+                                                    Concession
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (confirm('Mark this fee as fully PAID?')) handleUpdateFees(searchedStudent.usn, { [fee.key]: 0 });
+                                                    }}
+                                                    className="flex-1 text-sm font-medium text-emerald-600 hover:text-emerald-700 bg-white border border-gray-200 px-3 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+                                                >
+                                                    Mark Paid
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mx-8 mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <FileText size={20} className="text-indigo-600" />
+                            Fee Ledger History
+                        </h3>
+                        <div className="space-y-3">
+                            {/* Simulated Historic Data */}
+                            {Array.from({ length: searchedStudent.currentYear - 1 }, (_, i) => i + 1).flatMap(year => {
+                                // Check for existence
+                                const hasRecord = searchedStudent.feeRecords?.some(r => r.year === year && r.feeType === 'college');
+                                if (hasRecord) return [];
+
+                                const semA = (year * 2) - 1;
+                                const semB = year * 2;
+
+                                return [semA, semB].map(sem => (
+                                    <div key={`hist-adm-sem-${sem}`} className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gray-200 opacity-60">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-2 bg-gray-100 rounded-lg">
+                                                <CheckCircle size={16} className="text-gray-400" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-700 text-sm">Year {year} - Semester {sem}</p>
+                                                <p className="text-xs text-gray-500">College / Tuition Fee</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-bold border border-gray-200">ARCHIVED</span>
+                                            <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200">PAID</span>
+                                        </div>
+                                    </div>
+                                ));
+                            })}
+
+                            {/* Actual Records */}
+                            {searchedStudent.feeRecords && searchedStudent.feeRecords.length > 0 ? (
+                                searchedStudent.feeRecords.sort((a, b) => b.year - a.year || b.semester - a.semester).map((record) => (
+                                    <div key={record._id} className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-2 rounded-lg ${record.status === 'paid' ? 'bg-green-50' : 'bg-red-50'}`}>
+                                                <CreditCard size={16} className={`${record.status === 'paid' ? 'text-green-600' : 'text-red-600'}`} />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-900 text-sm">Year {record.year} - Semester {record.semester}</p>
+                                                <p className="text-xs text-gray-500 capitalize">{record.feeType} Fee</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-6 mt-3 md:mt-0 w-full md:w-auto">
+                                            <div className="text-right">
+                                                <p className="text-xs text-gray-400 font-medium uppercase">Amount Due</p>
+                                                <p className="font-bold text-gray-900">₹{record.amountDue}</p>
+                                            </div>
+                                            <div className="text-right border-l border-gray-100 pl-6">
+                                                <p className="text-xs text-gray-400 font-medium uppercase">Paid</p>
+                                                <p className={`font-bold ${record.amountPaid >= record.amountDue ? 'text-green-600' : 'text-gray-900'}`}>₹{record.amountPaid}</p>
+                                            </div>
+                                            <div className="pl-2">
+                                                {record.status === 'paid' ? (
+                                                    <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold block text-center min-w-[80px]">PAID</span>
+                                                ) : (
+                                                    <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold block text-center min-w-[80px]">PENDING</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-8 text-gray-400 italic">No active ledger records found.</div>
                             )}
                         </div>
-                    ))}
-                </div>
-
-                <div className="mx-8 mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText size={20} className="text-indigo-600" />
-                        Fee Ledger History
-                    </h3>
-                    <div className="space-y-3">
-                        {/* Simulated Historic Data */}
-                        {Array.from({ length: searchedStudent.currentYear - 1 }, (_, i) => i + 1).flatMap(year => {
-                            // Check for existence
-                            const hasRecord = searchedStudent.feeRecords?.some(r => r.year === year && r.feeType === 'college');
-                            if (hasRecord) return [];
-
-                            const semA = (year * 2) - 1;
-                            const semB = year * 2;
-
-                            return [semA, semB].map(sem => (
-                                <div key={`hist-adm-sem-${sem}`} className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gray-200 opacity-60">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-2 bg-gray-100 rounded-lg">
-                                            <CheckCircle size={16} className="text-gray-400" />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-700 text-sm">Year {year} - Semester {sem}</p>
-                                            <p className="text-xs text-gray-500">College / Tuition Fee</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-500 text-xs font-bold border border-gray-200">ARCHIVED</span>
-                                        <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-bold border border-green-200">PAID</span>
-                                    </div>
-                                </div>
-                            ));
-                        })}
-
-                        {/* Actual Records */}
-                        {searchedStudent.feeRecords && searchedStudent.feeRecords.length > 0 ? (
-                            searchedStudent.feeRecords.sort((a, b) => b.year - a.year || b.semester - a.semester).map((record) => (
-                                <div key={record._id} className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-2 rounded-lg ${record.status === 'paid' ? 'bg-green-50' : 'bg-red-50'}`}>
-                                            <CreditCard size={16} className={`${record.status === 'paid' ? 'text-green-600' : 'text-red-600'}`} />
-                                        </div>
-                                        <div>
-                                            <p className="font-bold text-gray-900 text-sm">Year {record.year} - Semester {record.semester}</p>
-                                            <p className="text-xs text-gray-500 capitalize">{record.feeType} Fee</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-6 mt-3 md:mt-0 w-full md:w-auto">
-                                        <div className="text-right">
-                                            <p className="text-xs text-gray-400 font-medium uppercase">Amount Due</p>
-                                            <p className="font-bold text-gray-900">₹{record.amountDue}</p>
-                                        </div>
-                                        <div className="text-right border-l border-gray-100 pl-6">
-                                            <p className="text-xs text-gray-400 font-medium uppercase">Paid</p>
-                                            <p className={`font-bold ${record.amountPaid >= record.amountDue ? 'text-green-600' : 'text-gray-900'}`}>₹{record.amountPaid}</p>
-                                        </div>
-                                        <div className="pl-2">
-                                            {record.status === 'paid' ? (
-                                                <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold block text-center min-w-[80px]">PAID</span>
-                                            ) : (
-                                                <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold block text-center min-w-[80px]">PENDING</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-8 text-gray-400 italic">No active ledger records found.</div>
-                        )}
                     </div>
                 </div>
-            </div>
-        )}
-    </div>
-);
+            )}
+        </div>
+    );
+};
 
 const AdminDashboard = () => {
     // Layout State
